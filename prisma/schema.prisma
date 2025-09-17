@@ -1,0 +1,343 @@
+/// =============================
+/// Prisma schema — Full version
+/// =============================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// =============================
+/// Enums (shared)
+/// =============================
+
+enum userRole {
+  student
+  admin
+ alumni
+ superAdmin
+}
+
+enum votetypes {
+  UP
+  DOWN
+}
+
+enum approveStatus {
+  approved
+  rejected
+  pending
+}
+
+enum AppStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+/// For donors & recipients
+enum BloodType {
+  A_POS     // A+
+  A_NEG     // A-
+  B_POS     // B+
+  B_NEG     // B-
+  AB_POS    // AB+
+  AB_NEG    // AB-
+  O_POS     // O+
+  O_NEG     // O-
+}
+
+/// =============================
+/// Core user & Social
+/// =============================
+
+model user {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      userRole @default(student)
+  image     String?
+  name      String?
+  studentId String @unique
+  bloodGroup BloodType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  posts            Post[]
+  votes            Votes[]
+  comments         Comments[]
+  jobPosts         JobPost[]
+  groupTours       GroupTour[]
+  jobApplications  JobApplication[]
+  tourJoins        TourJoin[]
+
+  // new relations
+  profile          userProfile?
+  bloodRequests    BloodRequest[]   @relation("userBloodRequests")
+  donationJoins    DonationJoin[]
+  organizedEvents  Event[]          @relation("userOrganizedEvents")
+  eventJoins       EventJoin[]      @relation("userEventJoins")
+
+  @@index([role])
+}
+
+model userProfile {
+  id              String     @id @default(uuid())
+  userId          String     @unique
+  user            user       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  bloodType       BloodType?
+  age             Int?
+  weightKg        Float?
+  lastDonationAt  DateTime?
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([bloodType])
+}
+
+model Post {
+  id          String   @id @default(uuid())
+  description String
+  location    String
+  image       String
+  approved    Boolean  @default(false)
+  status      approveStatus @default(pending)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  votes       Votes[]
+  comments    Comments[]
+
+  @@map("post")
+  @@index([status])
+  @@index([userId])
+}
+
+model Votes {
+  id        String   @id @default(uuid())
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  vote      votetypes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+model Comments {
+  id          String   @id @default(uuid())
+  user        user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId      String
+  commentText String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([postId])
+  @@index([userId])
+}
+
+/// =============================
+/// Job Portal
+/// =============================
+
+model JobPost {
+  id           String         @id @default(uuid())
+  title        String
+  company      String
+  description  String
+  requirements String
+  deadline     DateTime
+  status       approveStatus  @default(pending)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  authorId     String
+  author       user           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  applications JobApplication[]
+
+  @@index([status])
+  @@index([authorId])
+}
+
+model JobApplication {
+  id        String   @id @default(uuid())
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobPostId String
+  jobPost   JobPost  @relation(fields: [jobPostId], references: [id], onDelete: Cascade)
+  resume    String   // file upload URL
+  name      String
+  email     String
+  position  String
+  status    AppStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+
+  @@index([jobPostId])
+  @@index([userId])
+}
+
+/// =============================
+/// Group Tour
+/// =============================
+
+model GroupTour {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  difficulty  String
+  duration    String
+  route       String
+  highlights  String
+  deadline    DateTime
+  bkashNumber String
+  price String
+  status      approveStatus @default(pending)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  authorId    String
+  author      user        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  tourJoins   TourJoin[]
+
+  @@index([status])
+  @@index([authorId])
+}
+
+model TourJoin {
+  id          String     @id @default(uuid())
+  userId      String
+  user        user       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tourId      String
+  tour        GroupTour  @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  // payment info
+  bkashNumber String
+  trxId       String
+  amount      Float
+  verified    Boolean    @default(false)
+
+  status      AppStatus  @default(PENDING)
+  createdAt   DateTime   @default(now())
+
+  @@unique([userId, tourId])
+  @@index([tourId])
+}
+
+/// =============================
+/// Blood Donation Module
+/// =============================
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BloodRequest {
+  id            String         @id @default(uuid())
+  bloodType     BloodType
+  unitsNeeded   Int             @default(1)          // কত ব্যাগ লাগবে
+  urgencyLevel  UrgencyLevel    @default(LOW)        // Low, Medium, High
+  location      String
+  date          DateTime
+  notes         String?
+  contactPhone  String
+
+  status        approveStatus   @default(pending)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  requesterId   String
+  requester     user            @relation("userBloodRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+
+  donations     DonationJoin[]
+
+  @@index([status, bloodType])
+  @@index([requesterId])
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+
+model DonationJoin {
+  id           String       @id @default(uuid())
+  donorId      String
+  donor        user         @relation(fields: [donorId], references: [id], onDelete: Cascade)
+  requestId    String
+  request      BloodRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  status       AppStatus    @default(PENDING)
+  donatedAt    DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@unique([donorId, requestId])
+  @@index([requestId])
+}
+
+/// =============================
+/// Event Management Module
+/// =============================
+
+model Event {
+  id                   String         @id @default(uuid())
+  title                String
+  description          String
+  category             String
+  date                 DateTime
+  time                 String
+  location             String
+  maxParticipants      Int
+  registrationDeadline DateTime
+  contactEmail         String
+  status               approveStatus  @default(pending)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  organizerId          String
+  organizer            user           @relation("userOrganizedEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+
+  participants         EventJoin[]
+
+  @@index([status])
+  @@index([organizerId])
+}
+
+model EventJoin {
+  id        String     @id @default(uuid())
+  userId    String
+  user      user       @relation("userEventJoins", fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  status    AppStatus  @default(PENDING)
+  joinedAt  DateTime?
+  meetLink  String?    // ✅ শুধু approved হলে এখানে link save হবে
+  createdAt DateTime   @default(now())
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+}
+
+
+
+
+
