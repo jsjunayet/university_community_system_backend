@@ -1,14 +1,22 @@
 import { prisma } from "../../share/prismaClient";
 import { fcm } from "../../utils/firebaseAdmin";
 
-const createBloodRequest = async (payload: any, userId: string) => {
+const createBloodRequest = async (
+  payload: any,
+  userId: string,
+  role: string
+) => {
+  const status =
+    role === "admin" || role === "superAdmin" ? "approved" : "pending";
+
   const request = await prisma.bloodRequest.create({
-    data: { ...payload, requesterId: userId, status: "pending" },
+    data: { ...payload, requesterId: userId, status: status },
   });
 
   // সব user token নাও
   const tokens = await prisma.deviceToken.findMany();
   const tokenList = tokens.map((t) => t.token);
+  console.log(tokenList, "tokenList");
 
   if (tokenList.length > 0) {
     const res = await fcm.sendEachForMulticast({

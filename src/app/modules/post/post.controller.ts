@@ -6,7 +6,10 @@ import { postService } from "./post.service";
 
 const postCreateData = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user as JwtPayload;
-  const result = await postService.postCreateData(req.body, userId.id);
+  const role = req.user?.role;
+  const status =
+    role === "admin" || role === "superAdmin" ? "approved" : "pending";
+  const result = await postService.postCreateData(req.body, userId.id, status);
   sendResponse(res, {
     statusCode: 201,
     success: true,

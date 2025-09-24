@@ -7,7 +7,7 @@ const router = express.Router();
 // student
 router.post(
   "/",
-  authorizeRole(["stuent", "alumni", "superAdmin", "admin"]),
+  authorizeRole(["student", "alumni", "superAdmin", "admin"]),
   jobApplicationController.applyJob
 );
 router.delete(

@@ -58,10 +58,10 @@ const Registeruser = async (payload: user) => {
   <p>🔒 For your security, we strongly recommend changing your password immediately after your first login.</p>
 
   <p>
-    <a href="${"http://localhost:8080/login"}" 
+    <a href="${"https://university-project-five.vercel.app/login"}" 
        style="background-color: #4CAF50; color: white; padding: 10px 20px; 
               text-decoration: none; border-radius: 5px; display: inline-block;">
-      Log In to EduSync
+      Log In to UniConnect
     </a>
   </p>
 

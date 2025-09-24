@@ -9,7 +9,10 @@ const createTour = catchAsync(async (req: Request, res: Response) => {
     throw new Error("Unauthorized");
   }
   const userId = req.user.id;
-  const result = await tourService.createTour(req.body, userId);
+  const role = req.user.role;
+  const status =
+    role === "admin" || role === "superAdmin" ? "approved" : "pending";
+  const result = await tourService.createTour(req.body, userId, status);
   sendResponse(res, {
     statusCode: 201,
     success: true,

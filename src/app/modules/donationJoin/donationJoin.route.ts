@@ -35,7 +35,7 @@ router.get(
 // Approve/Reject donor
 router.patch(
   "/:id/status",
-  authorizeRole(["admin", "superAdmin"]),
+  authorizeRole(["student", "alumni","admin", "superAdmin"]),
   BloodDonationJoinController.updateDonationJoinStatus
 );
 

@@ -8,7 +8,7 @@ import { eventService } from "./event.service";
 const createEvent = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as JwtPayload;
   console.log(user);
-  const result = await eventService.createEvent(req.body, user.id);
+  const result = await eventService.createEvent(req.body, user.id, user.role);
   sendResponse(res, {
     statusCode: 201,
     success: true,

@@ -2,10 +2,20 @@ import { Post } from "@prisma/client";
 import { prisma } from "../../share/prismaClient";
 import { fcm } from "../../utils/firebaseAdmin";
 
-const postCreateData = async (payload: Post, userId: string) => {
+const postCreateData = async (
+  payload: Post,
+  userId: string,
+  status: string
+) => {
   const { description, location, image } = payload;
   const result = await prisma.post.create({
-    data: { description, location, image, user: { connect: { id: userId } } },
+    data: {
+      description,
+      status: status,
+      location,
+      image,
+      user: { connect: { id: userId } },
+    },
   });
 
   return result;

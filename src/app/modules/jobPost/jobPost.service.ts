@@ -1,8 +1,8 @@
 import { prisma } from "../../share/prismaClient";
 
-const createJobPost = async (payload: any, userId: string) => {
+const createJobPost = async (payload: any, userId: string, status: string) => {
   return await prisma.jobPost.create({
-    data: { ...payload, authorId: userId, status: "pending" },
+    data: { ...payload, authorId: userId, status: status },
   });
 };
 
@@ -24,7 +24,14 @@ const getAllJobPostsForUser = async () => {
 const getMyJobPosts = async (userId: string) => {
   return await prisma.jobPost.findMany({
     where: { authorId: userId },
-    include: { author: true },
+    include: {
+      author: true,
+      applications: {
+        include: {
+          user: true,
+        },
+      },
+    },
   });
 };
 

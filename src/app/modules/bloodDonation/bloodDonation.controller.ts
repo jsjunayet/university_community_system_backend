@@ -10,8 +10,13 @@ const createBloodRequest = catchAsync(async (req: Request, res: Response) => {
     throw new Error("Unauthorized");
   }
   const userId = req.user.id;
+  const role = req.user.role;
 
-  const result = await BloodRequestService.createBloodRequest(req.body, userId);
+  const result = await BloodRequestService.createBloodRequest(
+    req.body,
+    userId,
+    role
+  );
   sendResponse(res, {
     statusCode: 201,
     success: true,

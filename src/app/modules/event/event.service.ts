@@ -1,11 +1,15 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-const createEvent = async (payload: any, userId: string) => {
+const createEvent = async (payload: any, userId: string, role: string) => {
+  const status =
+    role === "admin" || role === "superAdmin" ? "approved" : "pending";
+  console.log(role, status);
   const result = await prisma.event.create({
     data: {
       ...payload,
       organizerId: userId,
+      status: status,
     },
   });
   return result;

@@ -2,9 +2,9 @@ import { approveStatus, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // create tour (student/alumni/author)
-const createTour = async (payload: any, userId: string) => {
+const createTour = async (payload: any, userId: string, status: string) => {
   return await prisma.groupTour.create({
-    data: { ...payload, authorId: userId, status: "pending" },
+    data: { ...payload, authorId: userId, status: status },
   });
 };
 
